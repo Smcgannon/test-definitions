@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -x
 
 HOST_OUTPUT="$(pwd)/output"
 LOCAL_DEVICE_OUTPUT="${HOST_OUTPUT}/device-output"
@@ -37,7 +37,7 @@ done
 
 parse_output() {
     test_case_id="$1"
-    if ! [ -f "${LOCAL_DEVICE_OUTPUT}/${test_case_id}-output.txt" ]; then
+    if ! [ -f "${LOCAL_DEVICE_OUTPUT}/dd-wr-speed/${test_case_id}-output.txt" ]; then
         warn_msg "${test_case_id} result file missing"
         return 1
     fi
@@ -54,7 +54,7 @@ parse_output() {
             add_metric "${test_case_id}-itr${itr}" "pass" "${measurement}" "MB/s"
             itr=$(( itr + 1 ))
         fi
-    done < "${LOCAL_DEVICE_OUTPUT}/${test_case_id}"-output.txt
+    done < "${LOCAL_DEVICE_OUTPUT}/dd-wr-speed/${test_case_id}"-output.txt
 
     # For multiple times dd test, calculate the mean, min and max values.
     # Save them to ${RESULT_FILE}.
@@ -94,7 +94,7 @@ adb_push "./device-script.sh" "/data/local/tmp/bin"
 info_msg "About to run dd speed test on device ${ANDROID_SERIAL}"
 adb shell "echo /data/local/tmp/bin/device-script.sh ${ITERATION} ${DEVICE_OUTPUT} ${PARTITION} | su" 2>&1 | tee "${HOST_OUTPUT}/device-stdout.log"
 
-adb_pull "${DEVICE_OUTPUT}" "${LOCAL_DEVICE_OUTPUT}"
+adb_pull "${DEVICE_OUTPUT}/" "${LOCAL_DEVICE_OUTPUT}"
 
 parse_output "dd-write"
 parse_output "dd-read"
