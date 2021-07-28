@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -x
 # shellcheck disable=SC1091
 
 BOOT_TIMEOUT="300"
