@@ -23,7 +23,7 @@ params:
     ITERATION: "5"
     # Specify device serial number for adb connection if more than one device
     # connected.
-    ANDROID_SERIAL: ""
+    ANDROID_SERIAL: "i500pumpkin"
     # Specify timeout in seconds for wait_boot_completed
     BOOT_TIMEOUT: "300"
 
