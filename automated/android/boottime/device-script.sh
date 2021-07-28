@@ -489,9 +489,6 @@ if [ "X${OPERATION}" = "XCOLLECT" ]; then
     ls -l ${dir_boottime_data}/*
     echo "==============list of files under ${dir_boottime_data}/ ends from here:"
 elif [ "X${OPERATION}" = "XANALYZE" ]; then
-  detect_abi
-  # shellcheck disable=SC2154
-  adb_push  "../../bin/${abi}/busybox" "/data/local/tmp/"
   logcat -d -v time *:V > "${dir_boottime_data}/logcat_all_$2.log"
 
   logcat -d -b events -v time > "${dir_boottime_data}/logcat_events_$2.log"

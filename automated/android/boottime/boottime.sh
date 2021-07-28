@@ -40,7 +40,9 @@ adb_root
 wait_boot_completed "${BOOT_TIMEOUT}"
 
 echo "BOOT_TO_UI pass" >> boot_result.txt
-
+detect_abi
+# shellcheck disable=SC2154
+adb_push  "../../bin/${abi}/busybox" "/data/local/tmp/"
 mv boot_result.txt output/
 f_device_script_name="device-script.sh"
 if [ -n "${ANDROID_VERSION}" ] && [ "X${ANDROID_VERSION}" = "Xmaster" ]; then
