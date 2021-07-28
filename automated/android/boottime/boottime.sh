@@ -40,8 +40,14 @@ adb_root
 wait_boot_completed "${BOOT_TIMEOUT}"
 
 echo "BOOT_TO_UI pass" >> boot_result.txt
-detect_abi
-# shellcheck disable=SC2154
+local abi
+abi="$(adb shell uname -m | tr -d '\r')"
+case $abi in
+  armv7|armv7l|armv7el|armv7lh) abi="armeabi" ;;
+  arm64|armv8|arm64-v8a|aarch64) abi="arm64" ;;
+  *) error_msg "Unknown architecture" ;;
+esac
+info_msg "ABI: ${abi}"# shellcheck disable=SC2154
 adb_push  "../../bin/${abi}/busybox" "/data/local/tmp/"
 mv boot_result.txt output/
 f_device_script_name="device-script.sh"
