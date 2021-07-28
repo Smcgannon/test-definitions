@@ -1,4 +1,4 @@
-#!/system/bin/sh
+#!/system/bin/sh -x
 ##############################################################################
 ## Description about this boot time measuring script                      ####
 ##############################################################################
@@ -87,8 +87,83 @@ RESULT_FILE="${dir_boottime_data}/result.txt"
 
 ## Copied from android/scripts/common.sh.
 G_RECORD_LOCAL_CSV=TRUE
-G_VERBOSE_OUTPUT=FALSE
+G_VERBOSE_OUTPUT=TRUE
 G_RESULT_NOT_RECORD=FALSE
+
+DATA_TMP="/data/local/tmp"
+
+collect_data(){
+    # shellcheck disable=SC2039
+    local bootstat_cmd="bootstat"
+    # shellcheck disable=SC2039
+    echo "collect data function"
+    local bootstat_res="${DATA_TMP}/bootstat.result"
+    echo "collect data function1"
+
+        if ! ${bootstat_cmd} -p | grep -v "Boot events" | grep -v '\--------'> "${bootstat_res}"
+        then
+          echo "collect data function fail"
+
+            output_test_result "bootstat" "fail"
+            exit 1
+        else
+            output_test_result "bootstat" "pass"
+            while read -r line; do
+                # shellcheck disable=SC2039
+                local test_case
+                test_case=$(echo "${line}" | awk '{print $1}')
+                # shellcheck disable=SC2039
+                local measurement
+                measurement=$(echo "${line}" | awk '{print $2}')
+                if [ "X${test_case}" = "Xboot_reason" ]; then
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "number"
+                elif echo "${test_case}" | grep -q "ro.boottime.init"; then
+                    # ro.boottime.init
+                    # ro.boottime.init.selinux
+                    # ro.boottime.init.cold_boot_wait
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "ms"
+                elif echo "${test_case}" | grep -q "boottime.bootloader"; then
+                    # boottime.bootloader.*
+                    # boottime.bootloader.total
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "ms"
+                elif [ "X${test_case}" = "Xtime_since_last_boot" ]; then
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                elif [ "X${test_case}" = "Xlast_boot_time_utc" ]; then
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                elif [ "X${test_case}" = "Xabsolute_boot_time" ]; then
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                elif [ "X${test_case}" = "Xbuild_date" ]; then
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                elif echo "${test_case}" | grep -q "boot_complete"; then
+                    # boot_complete
+                    # boot_complete_no_encryption
+                    # factory_reset_boot_complete
+                    # factory_reset_boot_complete_no_encryption
+                    # ota_boot_complete
+                    # ota_boot_complete_no_encryption
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                elif echo "${test_case}" | grep -q "factory_reset"; then
+                    # factory_reset
+                    # factory_reset_current_time
+                    # factory_reset_record_value
+                    # time_since_factory_reset
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "second"
+                else
+                    output_test_result "bootstat_${test_case}" "pass" "${measurement}" "unknown"
+                fi
+            done < "${bootstat_res}"
+            echo "collect data function2"
+
+            cd ${DATA_TMP} || exit 1
+            # if [ -n "$(which lava-test-run-attach)" ]; then
+            #     [ -f "bootstat.result" ] && lava-test-run-attach bootstat.result text/plain
+            #     [ -f "lava_test_shell_raw_data.csv" ] && lava-test-run-attach lava_test_shell_raw_data.csv text/plain
+            # fi
+            # rm -fr "${bootstat_res}"
+        fi
+        echo "collect data function3"
+
+}
 
 ## Description:
 ##    output the max value of the passed 2 parameters
@@ -261,7 +336,8 @@ getTime(){
     if [ -z "${key}" ]; then
         return
     fi
-
+    COLLECT_NO=$2
+    LOG_DMESG="${dir_boottime_data}/dmesg_${COLLECT_NO}.log"
     key_line=$(grep -i "${key}" "${LOG_DMESG}")
     if [ -n "${key_line}" ]; then
         timestamp=$(echo "${key_line}"|awk '{print $2}' | awk -F "]" '{print $1}')
@@ -276,7 +352,6 @@ getTimeStampFromLogcat(){
     if [ -z "${key}" ]; then
         return
     fi
-
     year=$(date +%G)
     key_line=$(grep -i "${key}" "${LOG_LOGCAT_ALL}")
     if [ -n "${key_line}" ]; then
@@ -303,37 +378,37 @@ getBootTimeInfoFromDmesg(){
     # we can't work around this without external time metering.
     # here we presume kernel message starts from 0
     CONSOLE_SECONDS_START=0
-    CONSOLE_SECONDS_END=$(getTime "Freeing unused kernel memory")
+    CONSOLE_SECONDS_END=$(getTime "Freeing unused kernel memory" ${COLLECT_NO} )
     if [ -n "${CONSOLE_SECONDS_END}" ] && [ -n "${CONSOLE_SECONDS_START}" ]; then
-        KERNEL_BOOT_TIME=$(echo "${CONSOLE_SECONDS_END} ${CONSOLE_SECONDS_START} - p" | dc)
+        KERNEL_BOOT_TIME=$(echo "${CONSOLE_SECONDS_END} ${CONSOLE_SECONDS_START} - p" | /data/local/tmp/busybox dc)
         output_test_result "KERNEL_BOOT_TIME" "pass" "${KERNEL_BOOT_TIME}" "s"
     fi
 
-    POINT_FS_MOUNT_START=$(getTime "Freeing unused kernel memory:"|tail -n1)
-    POINT_FS_MOUNT_END=$(getTime "init: Starting service 'logd'...")
+    POINT_FS_MOUNT_START=$(getTime "Freeing unused kernel memory:" ${COLLECT_NO} |tail -n1)
+    POINT_FS_MOUNT_END=$(getTime "init: Starting service 'logd'..." ${COLLECT_NO} )
     if [ -n "${POINT_FS_MOUNT_END}" ] && [ -n "${POINT_FS_MOUNT_START}" ]; then
-        FS_MOUNT_TIME=$(echo "${POINT_FS_MOUNT_END} ${POINT_FS_MOUNT_START} - p" | dc)
+        FS_MOUNT_TIME=$(echo "${POINT_FS_MOUNT_END} ${POINT_FS_MOUNT_START} - p" |/data/local/tmp/busybox dc)
         output_test_result "FS_MOUNT_TIME" "pass" "${FS_MOUNT_TIME}" "s"
     fi
 
-    POINT_FS_DURATION_START=$(getTime "init: /dev/hw_random not found"|tail -n1)
-    POINT_FS_DURATION_END=$(getTime "init: Starting service 'logd'...")
+    POINT_FS_DURATION_START=$(getTime "init: /dev/hw_random not found" ${COLLECT_NO} |tail -n1)
+    POINT_FS_DURATION_END=$(getTime "init: Starting service 'logd'..." ${COLLECT_NO} )
     if [ -n "${POINT_FS_DURATION_END}" ] && [ -n "${POINT_FS_DURATION_START}" ]; then
-        FS_MOUNT_DURATION=$(echo "${POINT_FS_DURATION_END} ${POINT_FS_DURATION_START} - p" | dc)
+        FS_MOUNT_DURATION=$(echo "${POINT_FS_DURATION_END} ${POINT_FS_DURATION_START} - p" |/data/local/tmp/busybox dc)
         output_test_result "FS_MOUNT_DURATION" "pass" "${FS_MOUNT_DURATION}" "s"
     fi
 
-    POINT_SERVICE_BOOTANIM_START=$(getTime "init: Starting service 'bootanim'..."|tail -n1)
-    POINT_SERVICE_BOOTANIM_END=$(getTime "init: Service 'bootanim'.* exited with status"|tail -n1)
+    POINT_SERVICE_BOOTANIM_START=$(getTime "init: Starting service 'bootanim'..." ${COLLECT_NO} |tail -n1)
+    POINT_SERVICE_BOOTANIM_END=$(getTime "init: Service 'bootanim'.* exited with status" ${COLLECT_NO} |tail -n1)
     if [ -n "${POINT_SERVICE_BOOTANIM_END}" ] && [ -n "${POINT_SERVICE_BOOTANIM_START}" ]; then
-        BOOTANIM_TIME=$(echo "${POINT_SERVICE_BOOTANIM_END} ${POINT_SERVICE_BOOTANIM_START} - p" | dc)
+        BOOTANIM_TIME=$(echo "${POINT_SERVICE_BOOTANIM_END} ${POINT_SERVICE_BOOTANIM_START} - p" |/data/local/tmp/busybox dc)
         output_test_result "BOOTANIM_TIME" "pass" "${BOOTANIM_TIME}" "s"
     fi
 
-    POINT_INIT_START=$(getTime "Freeing unused kernel memory")
-    POINT_SERVICE_SURFACEFLINGER_START=$(getTime "init: Starting service 'surfaceflinger'..."|tail -n1)
+    POINT_INIT_START=$(getTime "Freeing unused kernel memory" ${COLLECT_NO}  )
+    POINT_SERVICE_SURFACEFLINGER_START=$(getTime "init: Starting service 'surfaceflinger'..." ${COLLECT_NO} |tail -n1)
     if [ -n "${POINT_SERVICE_SURFACEFLINGER_START}" ] && [ -n "${POINT_INIT_START}" ]; then
-        INIT_TO_SURFACEFLINGER_START_TIME=$(echo "${POINT_SERVICE_SURFACEFLINGER_START} ${POINT_INIT_START} - p" | dc)
+        INIT_TO_SURFACEFLINGER_START_TIME=$(echo "${POINT_SERVICE_SURFACEFLINGER_START} ${POINT_INIT_START} - p" |/data/local/tmp/busybox dc)
         output_test_result "INIT_TO_SURFACEFLINGER_START_TIME" "pass" "${INIT_TO_SURFACEFLINGER_START_TIME}" "s"
     fi
 
@@ -381,7 +456,7 @@ getBootTimeInfoFromDmesg(){
     SERVICE_START_TIME_INFO=$(grep "healthd:" "${LOG_DMESG}"|head -n 1)
     SERVICE_START_TIME_END=$(echo "${SERVICE_START_TIME_INFO}"|cut -d] -f 1|cut -d[ -f2| tr -d " ")
     if [ -n "${SERVICE_START_TIME_END}" ] && [ -n "${CONSOLE_SECONDS_START}" ]; then
-        SERVICE_START_TIME=$(echo "${SERVICE_START_TIME_END} ${CONSOLE_SECONDS_START} - p" | dc)
+        SERVICE_START_TIME=$(echo "${SERVICE_START_TIME_END} ${CONSOLE_SECONDS_START} - p" |/data/local/tmp/busybox dc)
         output_test_result "ANDROID_SERVICE_START_TIME" "pass" "${SERVICE_START_TIME}" "s"
     fi
 
@@ -414,6 +489,14 @@ if [ "X${OPERATION}" = "XCOLLECT" ]; then
     ls -l ${dir_boottime_data}/*
     echo "==============list of files under ${dir_boottime_data}/ ends from here:"
 elif [ "X${OPERATION}" = "XANALYZE" ]; then
+  detect_abi
+  # shellcheck disable=SC2154
+  adb_push  "../../bin/${abi}/busybox" "/data/local/tmp/"
+  logcat -d -v time *:V > "${dir_boottime_data}/logcat_all_$2.log"
+
+  logcat -d -b events -v time > "${dir_boottime_data}/logcat_events_$2.log"
+
+  dmesg > "${dir_boottime_data}/dmesg_$2.log"
     count=$2
 
     ## Check if there is any case that the surfaceflinger service
@@ -429,6 +512,9 @@ elif [ "X${OPERATION}" = "XANALYZE" ]; then
         if [ $i -gt "$count" ]; then
             break
         fi
+        logcat -d -v time *:V > "${dir_boottime_data}/logcat_all_$i.log"
+        logcat -d -b events -v time > "${dir_boottime_data}/logcat_events_$i.log"
+        dmesg > "${dir_boottime_data}/dmesg_$i.log"
         ## check the existence of "Boot is finished"
         LOG_LOGCAT_ALL="${dir_boottime_data}/logcat_all_${i}.log"
         android_boottime_lines=$(grep -c "Boot is finished" "${LOG_LOGCAT_ALL}")
@@ -519,6 +605,11 @@ elif [ "X${OPERATION}" = "XANALYZE" ]; then
     cd ${local_tmp}|| exit 1
     tar -czvf boottime.tgz boottime
     output_test_result "BOOTTIME_ANALYZE" "pass"
+
+    echo "collect_data begin"
+    collect_data
+    echo "collect_data done"
+
 else
     G_VERBOSE_OUTPUT=FALSE
     G_RECORD_LOCAL_CSV=FALSE
