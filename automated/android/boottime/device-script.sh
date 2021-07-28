@@ -489,11 +489,9 @@ if [ "X${OPERATION}" = "XCOLLECT" ]; then
     ls -l ${dir_boottime_data}/*
     echo "==============list of files under ${dir_boottime_data}/ ends from here:"
 elif [ "X${OPERATION}" = "XANALYZE" ]; then
-  logcat -d -v time *:V > "${dir_boottime_data}/logcat_all_$2.log"
+  rm -rf ${dir_boottime_data}
+  mkdir -p ${dir_boottime_data}
 
-  logcat -d -b events -v time > "${dir_boottime_data}/logcat_events_$2.log"
-
-  dmesg > "${dir_boottime_data}/dmesg_$2.log"
     count=$2
 
     ## Check if there is any case that the surfaceflinger service
