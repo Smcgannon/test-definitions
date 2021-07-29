@@ -88,7 +88,7 @@ wait_boot_completed "${BOOT_TIMEOUT}"
 
 detect_abi
 # shellcheck disable=SC2154
-adb_push  "../../bin/${abi}/busybox" "/data/local/tmp/bin/"
+adb_push  "../../bin/arm64/busybox" "/data/local/tmp/bin/"
 adb_push "./device-script.sh" "/data/local/tmp/bin"
 
 info_msg "About to run dd speed test on device ${ANDROID_SERIAL}"
