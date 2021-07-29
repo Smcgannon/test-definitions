@@ -5,7 +5,7 @@ OUTPUT="$(pwd)/output"
 LOGFILE="${OUTPUT}/ping.log"
 RESULT_FILE="${OUTPUT}/result.txt"
 export RESULT_FILE
-ANDROID_SERIAL=""
+ANDROID_SERIAL="i500Pumpkin"
 BOOT_TIMEOUT="300"
 SERVER="www.google.com"
 AP_SSID=""
