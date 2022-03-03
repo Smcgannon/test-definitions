@@ -35,7 +35,8 @@ adb_debug_info() {
 initialize_adb() {
     #adb_debug_info
     adb start-server
-    timeout 600 adb wait-for-device || error_fatal "Device NOT found!"
+    adb devices
+    timeout 30 adb wait-for-device || error_fatal "Device NOT found!"
     adb devices
 
     if [ -z "${ANDROID_SERIAL}" ]; then
