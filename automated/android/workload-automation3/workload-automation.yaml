@@ -20,7 +20,7 @@ params:
     # Timeout for wait_boot_completed in seconds.
     BOOT_TIMEOUT: "300"
     # Specify adb device SN if more then one device connected.
-    ANDROID_SERIAL: "i500Pumpkin"
+    ANDROID_SERIAL: "BBBB000001"
     # Params for WA test run.
     WA_TAG: "master"
     WA_GIT_REPO: "https://github.com/ARM-software/workload-automation"
