@@ -33,7 +33,7 @@ adb_debug_info() {
 }
 
 initialize_adb() {
-    adb_debug_info
+    #adb_debug_info
     adb start-server
     timeout 600 adb wait-for-device || error_fatal "Device NOT found!"
     adb devices
