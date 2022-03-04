@@ -27,13 +27,13 @@ adb_debug_info() {
         find /dev/bus/usb || true
     fi
     info_msg "===== list fastboot devices start ========="
-    fastboot devices
+    #fastboot devices
     info_msg "===== list fastboot devices end ========="
     info_msg "===== default ANDROID_SERIAL=${ANDROID_SERIAL} ========="
 }
 
 initialize_adb() {
-    #adb_debug_info
+    adb_debug_info
     adb start-server
     adb devices
     timeout 30 adb wait-for-device || error_fatal "Device NOT found!"
