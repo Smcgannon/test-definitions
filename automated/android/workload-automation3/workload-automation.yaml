@@ -32,11 +32,11 @@ params:
     WA_TEMPLATES_REPO: "https://git.linaro.org/qa/wa-templates"
     TEMPLATES_BRANCH: "master"
     CONFIG: "config/generic-android.yaml"
-    AGENDA: "agenda/android-dhrystone.yaml"
-    PLUGIN: "http://build4.baylibre.com/var/www/html/lava/bl_plugins-0.0.1.tar.gz"
+    AGENDA: "http://build4.baylibre.com/var/www/html/lava/Agenda/testsuites/peripheral_i350-evk.yaml" # "agenda/android-dhrystone.yaml"
+    PLUGIN: "http://build4.baylibre.com/var/www/html/lava/Plugin_wa/bl_plugins-0.0.1.tar.gz"
     # allow extra extenstions for WA
-    WA_EXTENSION_PATHS: ""
-    PROBE: ""
+    WA_EXTENSAgenda/testsuites/peripheral_i350-evk.yamlION_PAT" HS: ""
+    PROBE: ""Plugin_wa/
     # directory where the WA results are stored
     # defaults to {TEST_DIR}/output
     OUTPUT: ""
