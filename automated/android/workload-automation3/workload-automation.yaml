@@ -37,7 +37,7 @@ params:
     PLUGIN: "http://build4.baylibre.com/var/www/html/lava/Plugin_wa/bl_plugins-0.0.1.tar.gz"
     # allow extra extenstions for WA
     WA_EXTENSAgenda/testsuites/peripheral_i350-evk.yamlION_PAT" HS: ""
-    PROBE: ""Plugin_wa/
+    PROBE: "Plugin_wa/"
     # directory where the WA results are stored
     # defaults to {TEST_DIR}/output
     OUTPUT: ""
