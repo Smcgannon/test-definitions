@@ -122,7 +122,7 @@ git clone "${WA_TEMPLATES_REPO}" wa-templates
     cd wa-templates
     git checkout "${TEMPLATES_BRANCH}"
     cp "${CONFIG}" ../config.yaml
-    curl -L -\# -O "${AGENDA}" ../agenda.yaml
+    curl -L -\# -o ../agenda.yaml "${AGENDA}" 
 )
 
 sed -i "s/device: 'android_serial'/device: ${ANDROID_SERIAL}/" ./config.yaml
